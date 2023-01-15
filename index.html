@@ -1,87 +1,87 @@
 <html lang='zh-CN'>
 <head>
-<link rel="stylesheet" id="bootstrap-css" href="./css/bootstrap.min.css" type="text/css" media="all">
-<link rel="stylesheet" id="nav-css" href="./css/nav.css" type="text/css" media="all">
-<meta name='description' content='收录各种自己制作的功能、网站，好用的在线小工具,进来看看吧！'>
-<title>首页 - 各种网站 - 各种在线功能</title>
-</head>
-<body>
-<div class="outer" id="div1">
-<div class="A" id="div2"><br><br><br><p style="color:white;text-align:center;font-size: 60;">一个普通的网站</p><p style="color:white;text-align:center;font-size: 20;">收录各种自己制作的功能、网站，好用的在线小工具。</p></div>
+<meta charset="utf-8">
+<title>世界各国电视台高清直播在线观看</title>
+<link rel="shortcut icon" href="favicon.ico">
+<meta name='description' content='以来自iptv-org的节目列表为目录制作的电视台直播网站。'>
+<script src="js/jquery.min.js"></script>
+<script>
+if (!!getUrlParam('id')==false||!!getUrlParam('vsan')==false){
+    window.location.assign("?id=4&vsan=0");
+}
 
+function getUrlParam(name) {
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+    var r = window.location.search.substr(1).match(reg);  //匹配目标参数
+    if (r != null) return unescape(r[2]); return null; //返回参数值
+}
+
+$.getJSON('index.json', function (data) {
+    a = "";
+    let arr = [];
+    for (var i in data){
+        arr.push(i);
+       
+    }
+    arr.sort();
+    for (var j in arr){
+        a = a + "<button style='width:300px;border-radius:0; border-width:1px;' id='"+j+"' onclick='javascript:window.location.assign(\"?id=\"+this.id+\"&vsan=0\");'>" + arr[j] + "</button><br>";
+    }
+    document.getElementById("iframe1").src="./m3u8player.html?url="+data[arr[getUrlParam("id")]][getUrlParam("vsan")];
+    let b = "当前频道："+arr[getUrlParam("id")]+"&emsp;<div style=\"float:right;\">换源：<select style=\"height:25px;width:160px;\" id=\"select\">";
+    for (var k in [...Array((data[arr[getUrlParam("id")]]).length).keys()]){
+        console.log(getUrlParam('vsan'))
+        if (k == 0){
+            b=b+"<option value='"+getUrlParam('vsan')+"' selected>源"+(parseInt(getUrlParam("vsan"))+1)+"</option>";
+        }
+        if (getUrlParam("vsan")==k){
+            continue;
+        }
+        b=b+"<option value='"+parseInt(k)+"'>源"+(parseInt(k)+1)+"</option>\n";
+    }
+    b=b+"<input type='button' value='切换' id='btn'></select></div>";
+        window.onload = function(){
+            $("#btn").click(function(){
+                var options=$("#select option:selected");
+                window.location.assign("?id="+getUrlParam("id")+"&vsan="+options.val());
+            });
+    }
+    var $div1 = $("#div1");
+    $div1.empty();
+    $div1.html(a);
+    var $div2 = $("#div2");
+    $div2.empty();
+    $div2.html(b);
+    document.getElementById('number').innerText='当前共有 '+arr.length+' 个频道,按照“点-数字-A-z-中文”排序。\n由于浏览器限制，进入网站后要手动播放。';
+
+
+})
+</script>
 <style>
 html,
-body { height: 100%;
-    padding: 0;
-    margin: 0; 
-
-}
-.outer { height: 100%; 
+body { height: 100%; padding: 0; margin: 0; }
+.outer { height: 100%;
     position: relative;
-    background: url(https://img.xjh.me/random_img.php?type=bg&ctype=nature&return=302) no-repeat;
-    background-size: 100% 100%;
-    background-attachment: fixed;
-    filter: opacity(0);
-}
-.A { height: 0px; background: black;
-filter: opacity(0.6); }
+    background-image: url(https://img.xjh.me/random_img.php?type=bg&ctype=nature&return=302);
+    background-repeat: no-repeat;
+    background-size: 100% auto;
+    -moz-background-size: 100% 100%;}
 </style>
-<br>
-<h1 style="text-align:center">目录</h1>
-<br>
-
-<div class="xe-card col-sm-5 col-md-4 ">
-    <a href="/onlineTV/" target="_blank" class="xe-widget xe-conversations box2 label-info">
-        <div class="xe-comment-entry">
-            <div class="xe-user-img">
-                <img class="lazy" src="img/1.jpg" alt="电视">
-            </div>
-            <div class="xe-comment">
-                <div class="xe-user-name overflowClip_1">
-                    <strong>世界各国电视台直播在线观看</strong>
-                </div>
-                <p class="overflowClip_2">以来自iptv-org的节目列表为目录制作的电视台直播网站</p>
-            </div>
+</head>
+<body>
+<div class="outer">
+<div style="width:1220px; height:100%;overflow:hidden;position: absolute;left: 0;right: 0;margin: auto;">
+    <h1 style="text-align:center;color:white;">世界各国电视台高清直播在线观看</h1>
+    <div style="width:1210px; height:530px;overflow:hidden;border:4px solid #888;" >
+        <div style="float: left;background-color:#000;">
+            <iframe src="" id="iframe1" scrolling="no" frameborder="no" style="width:910px; height:500px;overflow:hidden;left: 0;right: 0;margin: auto;"></iframe>
         </div>
-    </a>
-</div>
-<div class="xe-card col-sm-5 col-md-4 ">
-    <a href="/HTMLOnlineEditor/" target="_blank" class="xe-widget xe-conversations box2 label-info">
-        <div class="xe-comment-entry">
-            <div class="xe-user-img">
-                <img class="lazy" src="img/2.jpg" alt="html">
-            </div>
-            <div class="xe-comment">
-                <div class="xe-user-name overflowClip_1">
-                    <strong>html在线编辑器</strong>
-                </div>
-                <p class="overflowClip_2">您可以使用此工具进行在线的html设计</p>
-            </div>
-        </div>
-    </a>
+        <div style="width:300px; height:500px;overflow-y:auto;overflow-x:hidden;float: left;" id="div1"></div>
+        <div style="width:1210px; height:30px;overflow:hidden;border:4px solid #888;" id="div2"></div>
+    </div>
+    <p style="float: right;color:white">节目列表来自<a href='https://iptv-org.github.io'>iptv-org</a>,经软件测试,49%的节目可以正常播放,51%取决于网络。</p>
+    <p id="number" style="color:white;"></p>
 </div>
 </div>
-<script>
-    var rotateVal = 0 // 旋转角度
-    var InterVal // 定时器
-    window.onload = function () {
-        rotate()
-            //clearInterval(InterVal)
-    }
-            
-    // 设置定时器
-    function rotate () {
-        InterVal = setInterval(function () {
-            var div1 = document.getElementById('div1')
-            var div2 = document.getElementById('div2')
-            rotateVal += 2;
-            div2.style.height = 5*rotateVal + 'px';
-            div1.style.filter = 'opacity('+0.01*rotateVal+')';
-            if (rotateVal>=100){
-                clearInterval(InterVal);
-            }
-        }, 10)
-    }
-</script>
 </body>
 </html>
