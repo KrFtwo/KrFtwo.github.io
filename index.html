@@ -6,10 +6,31 @@
 <title>首页 - 各种网站 - 各种在线功能</title>
 </head>
 <body>
+<div class="outer" id="div1">
+<div class="A" id="div2"><br><br><br><p style="color:white;text-align:center;font-size: 60;">一个普通的网站</p><p style="color:white;text-align:center;font-size: 20;">收录各种自己制作的功能、网站，好用的在线小工具。</p></div>
+
+<style>
+html,
+body { height: 100%;
+    padding: 0;
+    margin: 0; 
+
+}
+.outer { height: 100%; 
+    position: relative;
+    background: url(https://img.xjh.me/random_img.php?type=bg&ctype=nature&return=302) no-repeat;
+    background-size: 100% 100%;
+    background-attachment: fixed;
+    filter: opacity(0);
+}
+.A { height: 0px; background: black;
+filter: opacity(0.6); }
+</style>
 <br>
-<h1 style="text-align:center">网站目录</h1>
+<h1 style="text-align:center">目录</h1>
 <br>
-<div class="xe-card col-sm-4 col-md-3 ">
+
+<div class="xe-card col-sm-5 col-md-4 ">
     <a href="/onlineTV/" target="_blank" class="xe-widget xe-conversations box2 label-info">
         <div class="xe-comment-entry">
             <div class="xe-user-img">
@@ -24,7 +45,7 @@
         </div>
     </a>
 </div>
-<div class="xe-card col-sm-4 col-md-3 ">
+<div class="xe-card col-sm-5 col-md-4 ">
     <a href="/HTMLOnlineEditor/" target="_blank" class="xe-widget xe-conversations box2 label-info">
         <div class="xe-comment-entry">
             <div class="xe-user-img">
@@ -39,5 +60,28 @@
         </div>
     </a>
 </div>
+</div>
+<script>
+    var rotateVal = 0 // 旋转角度
+    var InterVal // 定时器
+    window.onload = function () {
+        rotate()
+            //clearInterval(InterVal)
+    }
+            
+    // 设置定时器
+    function rotate () {
+        InterVal = setInterval(function () {
+            var div1 = document.getElementById('div1')
+            var div2 = document.getElementById('div2')
+            rotateVal += 2;
+            div2.style.height = 5*rotateVal + 'px';
+            div1.style.filter = 'opacity('+0.01*rotateVal+')';
+            if (rotateVal>=100){
+                clearInterval(InterVal);
+            }
+        }, 10)
+    }
+</script>
 </body>
 </html>
