@@ -32,16 +32,12 @@
     body { height: 100%;
         padding: 0;
         margin: 0; 
-
-    }
-    .outer { height: 100%; 
-        position: relative;
         background: url(https://img.xjh.me/random_img.php?type=bg&ctype=nature&return=302) no-repeat;
         background-size: 100% 100%;
         background-attachment: fixed;
+
     }
     </style>
-    <div class="outer">
     <div style="text-align:center;">
     二维码内容：<textarea id="input" placeholder="输入一个链接或一段文字" style="height: 330px;width: 260px;"></textarea><br>
     尺寸：<input type="range" id="ran" min="50" max="1000" step="1" value="200" onchange="show()"/><input type="text" id="num" disabled="true"/><br>
@@ -49,7 +45,6 @@
     可以右键保存。<br>
     <button onclick="make()">生成二维码</button>
     <div id="share_tools"></div>
-    </div>
     </div>
 </body>
 </html>
