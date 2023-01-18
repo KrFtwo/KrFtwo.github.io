@@ -60,13 +60,27 @@ filter: opacity(0.6); }
         </div>
     </a>
 </div>
+<div class="xe-card col-sm-5 col-md-4 ">
+    <a href="/QRCodeGenerator/" target="_blank" class="xe-widget xe-conversations box2 label-info">
+        <div class="xe-comment-entry">
+            <div class="xe-user-img">
+                <img class="lazy" src="img/3.jpg" alt="二维码">
+            </div>
+            <div class="xe-comment">
+                <div class="xe-user-name overflowClip_1">
+                    <strong>在线二维码生成器</strong>
+                </div>
+                <p class="overflowClip_2">您可以输入链接或文字来在线生成一个二维码的图片</p>
+            </div>
+        </div>
+    </a>
+</div>
 </div>
 <script>
-    var rotateVal = 0 // 旋转角度
-    var InterVal // 定时器
+    var rotateVal = 0
+    var InterVal
     window.onload = function () {
         rotate()
-            //clearInterval(InterVal)
     }
             
     // 设置定时器
@@ -80,7 +94,7 @@ filter: opacity(0.6); }
             if (rotateVal>=100){
                 clearInterval(InterVal);
             }
-        }, 10)
+        }, 10);
     }
 </script>
 </body>
