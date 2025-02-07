@@ -1,64 +1,87 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <title>视频转换器</title>
+</head>
 <body>
-  <input type="file" id="uploader" accept="video/*">
-  <video id="preview" controls></video>
-  <div id="status"></div>
+    <h1>视频转 MP4 转换器</h1>
+    
+    <!-- 文件上传输入 -->
+    <input type="file" id="uploader" accept="video/*" />
+    <button onclick="convert()" id="convertBtn">开始转换</button>
+    
+    <!-- 状态和结果 -->
+    <div id="status"></div>
+    <a id="downloadLink" style="display: none;">下载 MP4</a>
 
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.4/dist/umd/ffmpeg.min.js"></script>
-  <script>
-    const { createFFmpeg, fetchFile } = FFmpeg;
-    const ffmpeg = createFFmpeg({
-      log: true,
-      corePath: 'https://unpkg.com/@ffmpeg/core@0.12.2/dist/ffmpeg-core.js'
-    });
+    <!-- 引入 ffmpeg.wasm -->
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.4/dist/ffmpeg.min.js"></script>
+    <script>
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        let ffmpeg = null;
 
-    async function init() {
-      try {
-        document.getElementById('status').textContent = '加载 FFmpeg...';
-        await ffmpeg.load();
-        document.getElementById('status').textContent = '就绪';
-      } catch (err) {
-        console.error('加载失败:', err);
-        document.getElementById('status').textContent = `错误: ${err.message}`;
-      }
-    }
+        // 初始化 FFmpeg
+        async function initFFmpeg() {
+            ffmpeg = createFFmpeg({
+                log: true,
+                corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+            });
+            
+            document.getElementById('status').textContent = '加载 FFmpeg...';
+            await ffmpeg.load();
+            document.getElementById('status').textContent = '准备就绪';
+        }
 
-    document.getElementById('uploader').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+        // 转换函数
+        async function convert() {
+            const input = document.getElementById('uploader').files[0];
+            if (!input) {
+                alert('请先选择文件');
+                return;
+            }
 
-      try {
-        const preview = document.getElementById('preview');
-        preview.src = URL.createObjectURL(file);
+            try {
+                const btn = document.getElementById('convertBtn');
+                btn.disabled = true;
+                document.getElementById('status').textContent = '转换中...';
 
-        // 写入虚拟文件系统
-        ffmpeg.FS('writeFile', 'input', await fetchFile(file));
+                // 写入输入文件
+                ffmpeg.FS('writeFile', input.name, await fetchFile(input));
 
-        // 转换命令（优化参数）
-        await ffmpeg.run(
-          '-i', 'input',
-          '-c:v', 'libx264', '-preset', 'fast', '-crf', '23',
-          '-c:a', 'aac', '-b:a', '128k',
-          '-movflags', '+faststart',
-          'output.mp4'
-        );
+                // 执行转换命令
+                await ffmpeg.run(
+                    '-i', input.name,       // 输入文件
+                    '-c:v', 'libx264',      // 视频编码器
+                    '-preset', 'fast',      // 编码预设
+                    '-crf', '23',           // 质量参数
+                    '-c:a', 'aac',          // 音频编码器
+                    '-b:a', '128k',         // 音频比特率
+                    'output.mp4'            // 输出文件名
+                );
 
-        // 读取结果
-        const data = ffmpeg.FS('readFile', 'output.mp4');
-        const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
-        
-        preview.src = url;
-        document.getElementById('status').innerHTML = `
-          转换成功！<br>
-          <a href="${url}" download="converted.mp4">下载文件</a>
-        `;
-      } catch (err) {
-        document.getElementById('status').textContent = `转换失败: ${err.message}`;
-      }
-    });
+                // 读取结果
+                const data = ffmpeg.FS('readFile', 'output.mp4');
+                
+                // 创建下载链接
+                const url = URL.createObjectURL(
+                    new Blob([data.buffer], { type: 'video/mp4' })
+                );
+                
+                const link = document.getElementById('downloadLink');
+                link.href = url;
+                link.download = 'converted.mp4';
+                link.style.display = 'block';
+                document.getElementById('status').textContent = '转换完成！';
+            } catch (err) {
+                console.error(err);
+                document.getElementById('status').textContent = '转换失败: ' + err.message;
+            } finally {
+                btn.disabled = false;
+            }
+        }
 
-    init();
-  </script>
+        // 页面加载时初始化
+        initFFmpeg();
+    </script>
 </body>
 </html>
