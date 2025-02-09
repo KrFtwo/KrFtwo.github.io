@@ -27,7 +27,7 @@
         // 初始化配置
         const { createFFmpeg, fetchFile } = FFmpeg;
         const ffmpeg = createFFmpeg({
-            corePath: './ffmpeg-core.js',
+            corePath: window.location.host+'ffmpeg-core.js',
             log: true
         });
 
