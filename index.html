@@ -19,12 +19,12 @@
     <div id="status">初始化中...</div>
     <a id="downloadLink" style="display: none;">下载MP4</a>
 
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.0/dist/umd/ffmpeg.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
     <script>
         // 初始化配置
         const { createFFmpeg, fetchFile } = FFmpeg;
         const ffmpeg = createFFmpeg({
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.12.0/dist/umd/ffmpeg-core.js',
+            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
             log: true
         });
 
