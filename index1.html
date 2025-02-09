@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+    <script src="coi-serviceworker.js"></script>
+    <meta charset="UTF-8">
+    <title>高级视频转换器</title>
+    <style>
+        :root {
+            --primary: #2196F3;
+            --success: #4CAF50;
+            --danger: #f44336;
+        }
+
+        body {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            font-family: 'Segoe UI', system-ui;
+        }
+
+        .progress-container {
+            height: 20px;
+            background: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #1976D2);
+            transition: width 0.3s ease;
+        }
+
+        .file-list {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 100px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .file-item > span {
+            flex: 1;
+            margin: 0 15px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>批量视频转换器</h1>
+
+    <!-- 文件上传区 -->
+    <div class="file-list" id="fileList">
+        <div id="dropZone" style="text-align: center; color: #666;">
+            拖放文件到这里或点击选择<br>
+            (支持多选，最大5GB/文件)
+        </div>
+    </div>
+
+    <!-- 控制区 -->
+    <button onclick="handleFileSelect()">选择文件</button>
+    <button onclick="startProcessing()" id="processBtn" disabled>开始转换</button>
+
+    <!-- 进度指示 -->
+    <div class="progress-container">
+        <div class="progress-bar" id="coreLoadProgress"></div>
+    </div>
+    <div id="globalStatus">初始化中...</div>
+
+    <!-- 本地依赖 -->
+    <script src="ffmpeg.min.js"></script>
+    <script>
+        const CONFIG = {
+            MAX_FILE_SIZE: 5 * 1024 * 1024 * 1024, // 5GB
+            CHUNK_SIZE: 50 * 1024 * 1024, // 50MB
+            WORKER_URL: 'ffmpeg-core.worker.js'
+        };
+
+        let ffmpeg = null;
+        let filesQueue = [];
+        const fileStates = new Map();
+
+        // 初始化FFmpeg（带进度监控）
+        async function initializeFFmpeg() {
+            const coreBlob = await fetch('ffmpeg-core-mt.js').then(r => r.blob());
+            const totalSize = coreBlob.size;
+            let loaded = 0;
+
+            const reader = new FileReader();
+            reader.onprogress = (e) => {
+                loaded = e.loaded;
+                updateProgress(loaded / totalSize * 100, 'coreLoadProgress');
+            };
+
+            reader.readAsArrayBuffer(coreBlob);
+            
+            ffmpeg = FFmpeg.createFFmpeg({
+                core: await new Response(coreBlob).arrayBuffer(),
+                workerURL: CONFIG.WORKER_URL,
+                log: true
+            });
+
+            await ffmpeg.load();
+        }
+
+        // 文件选择处理
+        async function handleFileSelect() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            input.accept = 'video/*';
+            input.onchange = async (e) => {
+                await processFiles(e.target.files);
+            };
+            input.click();
+        }
+
+        // 处理文件列表
+        async function processFiles(fileList) {
+            for (const file of fileList) {
+                if (file.size > CONFIG.MAX_FILE_SIZE) {
+                    alert(`文件 ${file.name} 超过5GB限制`);
+                    continue;
+                }
+
+                filesQueue.push(file);
+                addFileToList(file);
+            }
+            updateProcessButton();
+        }
+
+        // 添加文件到列表
+        function addFileToList(file) {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `
+                <div class="status-indicator"></div>
+                <span>${file.name}</span>
+                <span>${formatFileSize(file.size)}</span>
+            `;
+            document.getElementById('fileList').appendChild(item);
+            fileStates.set(file.name, { element: item });
+        }
+
+        // 分段处理大文件
+        async function processLargeFile(file) {
+            const chunks = Math.ceil(file.size / CONFIG.CHUNK_SIZE);
+            const fileBuffer = new Uint8Array(file.size);
+            
+            for (let i = 0; i < chunks; i++) {
+                const chunk = file.slice(
+                    i * CONFIG.CHUNK_SIZE,
+                    (i + 1) * CONFIG.CHUNK_SIZE
+                );
+                
+                const arrayBuffer = await chunk.arrayBuffer();
+                fileBuffer.set(new Uint8Array(arrayBuffer), i * CONFIG.CHUNK_SIZE);
+                
+                updateFileProgress(file.name, (i + 1) / chunks * 100);
+            }
+
+            ffmpeg.FS('writeFile', file.name, fileBuffer);
+        }
+
+        // 启动处理流程
+        async function startProcessing() {
+            document.getElementById('processBtn').disabled = true;
+            
+            for (const file of filesQueue) {
+                try {
+                    updateFileStatus(file.name, 'processing');
+                    await processLargeFile(file);
+                    
+                    await ffmpeg.run(
+                        '-i', file.name,
+                        '-c:v', 'libx264',
+                        '-preset', 'fast',
+                        '-crf', '23',
+                        '-c:a', 'aac',
+                        '-b:a', '128k',
+                        `${file.name}.mp4`
+                    );
+
+                    const output = ffmpeg.FS('readFile', `${file.name}.mp4`);
+                    saveFile(output, `${file.name}.mp4`);
+                    updateFileStatus(file.name, 'success');
+                } catch (error) {
+                    updateFileStatus(file.name, 'error');
+                    console.error(`处理 ${file.name} 失败:`, error);
+                }
+            }
+            
+            filesQueue = [];
+            updateProcessButton();
+        }
+
+        // 工具函数
+        function updateProgress(percent, elementId) {
+            document.getElementById(elementId).style.width = `${percent}%`;
+        }
+
+        function updateFileProgress(fileName, percent) {
+            const state = fileStates.get(fileName);
+            if (state) {
+                state.element.querySelector('.status-indicator').style.background = 
+                    `linear-gradient(90deg, var(--primary) ${percent}%, #eee ${percent}%)`;
+            }
+        }
+
+        function updateFileStatus(fileName, status) {
+            const state = fileStates.get(fileName);
+            if (state) {
+                const colors = {
+                    processing: 'var(--primary)',
+                    success: 'var(--success)',
+                    error: 'var(--danger)'
+                };
+                state.element.querySelector('.status-indicator').style.background = colors[status];
+            }
+        }
+
+        function formatFileSize(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            return `${size.toFixed(2)} ${units[unitIndex]}`;
+        }
+
+        function saveFile(buffer, fileName) {
+            const blob = new Blob([buffer], { type: 'video/mp4' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function updateProcessButton() {
+            document.getElementById('processBtn').disabled = filesQueue.length === 0;
+        }
+
+        // 初始化
+        initializeFFmpeg().then(() => {
+            document.getElementById('globalStatus').textContent = '就绪';
+            document.getElementById('coreLoadProgress').style.width = '100%';
+        }).catch(error => {
+            document.getElementById('globalStatus').textContent = `初始化失败: ${error.message}`;
+            document.getElementById('globalStatus').style.color = 'var(--danger)';
+        });
+
+        // 拖放支持
+        const dropZone = document.getElementById('dropZone');
+        dropZone.ondragover = (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '#f0f0f0';
+        };
+
+        dropZone.ondrop = async (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = '';
+            await processFiles(e.dataTransfer.files);
+        };
+    </script>
+</body>
+</html>
