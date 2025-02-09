@@ -27,10 +27,9 @@
         // 初始化配置
         const { createFFmpeg, fetchFile } = FFmpeg;
         const ffmpeg = createFFmpeg({
-            corePath: window.location.protocol+"://"+window.location.host+'/ffmpeg-core.js',
+            corePath: window.location.protocol+"//"+window.location.host+'/ffmpeg-core.js',
             log: true
         });
-        console.log(window.location.protocol+"://"+window.location.host+'/ffmpeg-core.js');
         // DOM元素
         const elements = {
             videoInput: document.getElementById('videoInput'),
